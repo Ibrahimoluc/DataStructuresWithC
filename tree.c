@@ -50,12 +50,12 @@ struct node* lookup(int data, struct node *root){
 	return NULL;
 }
 
-int delete(int data, struct node *root){
+int delete(int data, struct node **root){
 	//burdan devam et, notlarrina bak, sadece datayi degistirmek, sag subtree nin en solunu almak.
 	//firs step: find the node and his parent from data
-	struct node* parent;
-	struct node *delNode=root;
-	while(root!=NULL){
+	struct node *parent=*root;
+	struct node *delNode=*root;
+	while(delNode!=NULL){
 		if(delNode->data==data) break;
 		parent = delNode;
 		delNode = (data > delNode->data) ? delNode->right : delNode->left;
@@ -71,36 +71,53 @@ int delete(int data, struct node *root){
 		return 0;
 	}
 
-	//if it is not leaf, it can have two children or 1. We look in this way, if it has right children because that changes things. 
-	
-	//get right subtree, if has, 
-	if(delNode->right==NULL) Node = delNode->right;
-	
-	
-	//now we have to find far left node, burada defterindeki 12,14 ornegindeki gibi bir sikinti olabilir, yani 12'yi aldin 14 nereye konulcak.
-	while(Node->left!=NULL){
-		parent = Node;
-		Node = Node->left;
-	}
-	printf("delNode data:%d\n", delNode->data);
-	printf("Node data:%d\n", Node->data);
-	delNode->data = Node->data;
+	//if it is not leaf, it can have two children or 1.  
 
-	//burada bosluga dusen cocuklari dusun
-	//it is clear that Node has no left child, but right can have
-	if(Node->right!=NULL) parent->left = Node->right;
-	else parent->left = NULL;
-	free(Node); 
+	//if it has two children
+	struct node *left=delNode->left; //represents only a node or subtree
+	struct node *right=delNode->right; //represents only a node or subtree  
+	if(left!=NULL && right!=NULL){
+		//delNode=20, parent=10, right=25
+		//sol subtreenin en sagini bul, oraya sag nodenin sol subtreesi konulacak
+		//struct node *temp = left;
+		while(left->right!=NULL) left = left->right; //burada left=16 olacak bizim ornege gore
+		left->right = right->left;
+
+		//now we have to bind delNode's parent to new Node
+		//bizim ornekte delNode parentin saginda
+		//eger delNode root ise yani parent = delNode
+		if(parent==delNode){
+			right->left = (*root)->left;
+			*root = right;
+		}
+
+		//if it is right node
+		if(parent->right==delNode){
+			parent->right = right;
+			right->left = delNode->left;	 	
+		}
+		else{ //if it is left node
+			parent->left = right;
+			right->left = delNode->left;
+		}
+	
+		//lastly free delNode
+		free(delNode);
+		return 0;
+	}
+	
 }
 
 
 int main(){
 	printf("%s", "Hello World, Let's have a Tree!!!\n");
-	struct node *root = createTree(5);
-	insert(3, root); insert(7, root); insert(2, root); insert(4, root); insert(6, root); insert(10, root);
-
+	//struct node *root = createTree(5);
+	//insert(3, root); insert(7, root); insert(2, root); insert(4, root); insert(6, root); insert(10, root);
+	struct node *root = createTree(10);
+	insert(4, root); insert(2, root); insert(8, root); insert(20, root); insert(15, root); insert(12, root); insert(16, root); insert(14, root); insert(25, root); insert(22, root); insert(21, root);
+	insert(30, root); insert(36, root); insert(32, root);
 	traverse(root);
-	delete(2, root);
+	delete(3, &root);
 	traverse(root);
 
 	/*
